@@ -1,0 +1,29 @@
+# download.py
+import os
+from modelscope import snapshot_download
+
+# 1. 确认下载目录
+if not os.path.exists('./model'):
+    os.makedirs('./model')
+
+print("正在下载最新模型资源 (iic/Newest Models)...")
+
+# 2. 下载 ASR 模型 (Paraformer-Large-Online 2Pass)
+# 这是目前最强的 CPU 实时/离线兼顾模型，支持中英文混合(中文为主)
+print("Downloading ASR (Paraformer)...")
+snapshot_download('iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx',
+                  local_dir='./model/asr')
+
+# 3. 下载 VAD 模型 (语音活动检测)
+# 用于切分语音和静音，FSMN 是目前的标配
+print("Downloading VAD (FSMN)...")
+snapshot_download('iic/speech_fsmn_vad_zh-cn-16k-common-onnx',
+                  local_dir='./model/vad')
+
+# 4. 下载 PUNC 模型 (标点恢复)
+# 实时加标点
+print("Downloading PUNC (CT-Transformer)...")
+snapshot_download('iic/punc_ct-transformer_zh-cn-common-vocab272727-onnx',
+                  local_dir='./model/punc')
+
+print("所有模型下载完成！准备构建 Docker 镜像。")

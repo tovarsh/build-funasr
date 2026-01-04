@@ -1,0 +1,1 @@
+需要执行 download.py 得到 Paraformer VAD PUNC 模型
