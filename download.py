@@ -26,4 +26,13 @@ print("Downloading PUNC (CT-Transformer)...")
 snapshot_download('iic/punc_ct-transformer_zh-cn-common-vocab272727-onnx',
                   local_dir='./model/punc')
 
+# 4. 下载 ITN 模型 (时间处理)
+print("Downloading ITN...")
+snapshot_download('thuduj12/fst_itn_zh',
+                  local_dir='./model/itn')
+
+print("Downloading LM ...")
+snapshot_download('damo/speech_ngram_lm_zh-cn-ai-wesp-fst',
+                  local_dir='./model/lm')
+
 print("所有模型下载完成！准备构建 Docker 镜像。")

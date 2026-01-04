@@ -1,32 +1,29 @@
 #!/bin/bash
-
-# 开启 bash 错误追踪
 set -e
 
 echo "--------------------------------------------------"
-echo "启动 FunASR CPU 全能服务 (Created by Lumen)"
-echo "Base Image: FunASR Runtime SDK 0.4.7"
+echo "启动 FunASR CPU 纯离线版 (Final Offline)"
 echo "--------------------------------------------------"
 
-# 读取环境变量，如果不存在则使用默认值 (虽然 Dockerfile 已设，这里做双重保险)
-# shell 语法: ${VAR:-default}
+# 读取环境变量
 IO_THREAD=${IO_THREAD_NUM:-4}
 DEC_THREAD=${DECODER_THREAD_NUM:-4}
 SRV_PORT=${PORT:-10095}
 SSL_CERT=${CERT_FILE:-0}
 
-echo ">>> 配置参数:"
-echo "    Port: $SRV_PORT"
-echo "    IO Threads: $IO_THREAD"
-echo "    Decoder Threads: $DEC_THREAD"
-echo "    SSL Cert: $SSL_CERT"
-echo "--------------------------------------------------"
+# 绝对路径
+BIN_PATH="/workspace/FunASR/runtime/websocket/build/bin/funasr-wss-server"
 
-# 使用 exec 启动，确保 funasr 进程成为 PID 1，能够接收 docker stop 信号
-exec ./funasr-wss-server \
+echo ">>> Bin路径: $BIN_PATH"
+echo ">>> 正在加载本地模型 (ASR + VAD + PUNC + ITN + LM)..."
+
+# 🔥 显式指定所有路径，堵死联网缺口
+exec $BIN_PATH \
   --model-dir /workspace/models/asr \
   --vad-dir /workspace/models/vad \
   --punc-dir /workspace/models/punc \
+  --itn-dir /workspace/models/itn \
+  --lm-dir /workspace/models/lm \
   --vad-quant true \
   --punc-quant true \
   --port "${SRV_PORT}" \

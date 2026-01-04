@@ -9,6 +9,7 @@ COPY model/ /workspace/models/
 
 # 2. 复制启动脚本
 COPY entrypoint.sh /workspace/entrypoint.sh
+RUN sed -i 's/\r$//' /workspace/entrypoint.sh
 RUN chmod +x /workspace/entrypoint.sh
 
 # 3. 设置默认环境变量 (可以在 docker run 或 docker-compose 中覆盖)
