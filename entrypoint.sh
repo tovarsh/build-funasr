@@ -2,7 +2,7 @@
 set -e
 
 echo "--------------------------------------------------"
-echo "启动 FunASR CPU 2Pass 服务 (Online Image 0.1.12)"
+echo "启动 FunASR CPU 纯离线版 (Final Offline)"
 echo "--------------------------------------------------"
 
 # 读取环境变量
@@ -12,13 +12,14 @@ SRV_PORT=${PORT:-10095}
 SSL_CERT=${CERT_FILE:-0}
 
 # 绝对路径
-BIN_PATH="/workspace/FunASR/runtime/websocket/build/bin/funasr-wss-server"
+BIN_PATH="/workspace/FunASR/runtime/websocket/build/bin/funasr-wss-server-2pass"
 
 echo ">>> Bin路径: $BIN_PATH"
-echo ">>> 正在加载模型..."
+echo ">>> 正在加载本地模型 (ASR + VAD + PUNC + ITN + LM)..."
 
 exec $BIN_PATH \
   --model-dir /workspace/models/asr_offline \
+  --online-model-dir /workspace/models/asr_online \
   --vad-dir /workspace/models/vad \
   --punc-dir /workspace/models/punc \
   --itn-dir /workspace/models/itn \

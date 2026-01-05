@@ -1,6 +1,6 @@
 # 使用官方最新的 CPU Runtime SDK
 # 包含了 ONNXRuntime, OpenBLAS 等底层依赖
-FROM registry.cn-hangzhou.aliyuncs.com/funasr_repo/funasr:funasr-runtime-sdk-cpu-0.4.7
+FROM registry.cn-hangzhou.aliyuncs.com/funasr_repo/funasr:funasr-runtime-sdk-online-cpu-0.1.12
 MAINTAINER J.Knight<jk@sov.red>
 WORKDIR /workspace
 
