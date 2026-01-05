@@ -8,11 +8,11 @@ if not os.path.exists('./model'):
 
 print("正在下载最新模型资源 (iic/Newest Models)...")
 
-# 2. 下载 ASR 模型 (Paraformer-Large-Online 2Pass)
-# 这是目前最强的 CPU 实时/离线兼顾模型，支持中英文混合(中文为主)
-print("Downloading ASR (Paraformer)...")
-snapshot_download('iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-online-onnx',
-                  local_dir='./model/asr')
+# 2. 下载 ASR 模型
+# 下载离线模型 (用于 2Pass 中的修正 或 纯离线转写)
+print("Downloading Offline Model (for 2Pass correction)...")
+snapshot_download('iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-onnx',
+                  local_dir='./model/asr_offline')
 
 # 3. 下载 VAD 模型 (语音活动检测)
 # 用于切分语音和静音，FSMN 是目前的标配
