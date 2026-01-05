@@ -12,6 +12,7 @@
 
 * **标签**: `:online`
 * **基础镜像**: `funasr-runtime-sdk-online-cpu-0.1.12`
+* **公益测试镜像**: `ccr.ccs.tencentyun.com/comintern/asr:online`
 * **核心算法**: 采用分块 (Chunk-based) 与 2Pass (两遍) 联合解码算法。
 * **适用场景**: 实时语音输入法、直播实时字幕、语音助手等对延迟敏感的即时交互场景。
 * **特性**: 支持实时流式输入，并在句尾进行高精度离线修正。
@@ -20,9 +21,14 @@
 
 * **标签**: `:offline`
 * **基础镜像**: `funasr-runtime-sdk-cpu-0.4.7`
+* **公益测试镜像**: `ccr.ccs.tencentyun.com/comintern/asr:offline`
 * **核心算法**: 采用全局 SAN-M (Self-Attention Network with Memory) 并行计算算法。
-* **适用场景**: 会议录音归档、客服通话质检、长音频文件转写等对吞吐量要求极高的后端批处理任务。
+* **适用场景**: 视频人声提取、会议录音归档、客服通话质检、长音频文件转写等对吞吐量要求极高的后端批处理任务。
 * **特性**: 不支持流式输入，专注于全量音频文件的高速转写。
+
+### 3. Offline_ai 分支 (离线版)
+
+-[ ] 待优质低成本模型发展技术下放, 提取人声能识别感情、角色等功能
 
 ## 技术特性
 
@@ -73,7 +79,7 @@ python3 download.py
 **构建 Online 分支:**
 
 ```bash
-# 建议标签: ccr.ccs.tencentyun.com/lumen/asr:online
+# IMAGE_NAME: ccr.ccs.tencentyun.com/lumen/asr:online
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t <IMAGE_NAME>:online \
@@ -85,7 +91,7 @@ docker buildx build \
 **构建 Offline 分支:**
 
 ```bash
-# 建议标签: ccr.ccs.tencentyun.com/lumen/asr:offline
+# IMAGE_NAME: ccr.ccs.tencentyun.com/lumen/asr:offline
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t <IMAGE_NAME>:offline \
@@ -147,7 +153,7 @@ pip install funasr-wss-client
 | **ASR Model** | paraformer-large-online-onnx | paraformer-large-onnx |
 | **VAD Model** | fsmn-vad-online-onnx | fsmn-vad-onnx |
 | **Punc Model** | ct-transformer-punc-onnx | ct-transformer-punc-onnx |
-| **默认端口** | 10095 | 10096 |
+| **默认端口** | 10095 | 10095 |
 
 ---
 
