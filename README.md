@@ -1,111 +1,160 @@
-# FunASR CPU All-in-One Docker Image
+# FunASR CPU Docker Images
 
-这个项目用于构建一个**开箱即用、全平台支持 (AMD64/ARM64)、纯 CPU 推理**的 FunASR 服务镜像。
+本项目用于构建基于 Alibaba FunASR Runtime SDK 的纯 CPU 语音识别服务镜像。项目旨在提供开箱即用、无需 GPU 依赖、支持多架构（AMD64/ARM64）的标准化推理环境。
 
-该镜像基于 Alibaba FunASR Runtime SDK 0.4.x (Runtime 2.0)，**内置了**最新的语音识别模型资源，部署时无需挂载外部卷。
+镜像通过预置模型权重文件，实现了服务的无状态部署，无需在运行时挂载外部存储卷。
 
----
+## 架构分支说明
 
-## 核心特性
+本项目提供两种针对不同业务场景优化的镜像分支：
 
-* **纯 CPU 推理**: 针对 CPU 优化，无需 GPU。
-* **内置模型**: 镜像内包含 Paraformer (ASR), FSMN (VAD), CT-Transformer (Punc)。
-* **双模式支持**: 同时支持**实时流式 (Real-time)** 和 **离线文件 (Offline/2Pass)** 转写。
-* **0 配置启动**: 启动命令无需指定复杂的模型路径参数。
-* **全平台**: 支持 Linux/AMD64 和 Linux/ARM64 (如 Mac M芯片, 树莓派)。
+### 1. Online 分支 (流式版)
 
----
+* **标签**: `:online`
+* **基础镜像**: `funasr-runtime-sdk-online-cpu-0.1.12`
+* **公益测试镜像**: `ccr.ccs.tencentyun.com/comintern/asr:online`
+* **核心算法**: 采用分块 (Chunk-based) 与 2Pass (两遍) 联合解码算法。
+* **适用场景**: 实时语音输入法、直播实时字幕、语音助手等对延迟敏感的即时交互场景。
+* **特性**: 支持实时流式输入，并在句尾进行高精度离线修正。
+
+### 2. Offline 分支 (离线版)
+
+* **标签**: `:offline`
+* **基础镜像**: `funasr-runtime-sdk-cpu-0.4.7`
+* **公益测试镜像**: `ccr.ccs.tencentyun.com/comintern/asr:offline`
+* **核心算法**: 采用全局 SAN-M (Self-Attention Network with Memory) 并行计算算法。
+* **适用场景**: 视频人声提取、会议录音归档、客服通话质检、长音频文件转写等对吞吐量要求极高的后端批处理任务。
+* **特性**: 不支持流式输入，专注于全量音频文件的高速转写。
+
+### 3. Offline_ai 分支 (离线版)
+
+-[ ] 待优质低成本模型发展技术下放, 提取人声能识别感情、角色等功能
+
+## 技术特性
+
+* **纯 CPU 推理**: 针对 CPU 指令集优化，降低部署成本，无需显卡资源。
+* **内置模型资源**: 镜像内集成 Paraformer (ASR)、FSMN (VAD) 及 CT-Transformer (Punc) 模型，实现零依赖启动。
+* **跨平台支持**: 构建脚本支持 `linux/amd64` (x86_64) 及 `linux/arm64` (aarch64/Apple Silicon) 架构。
+* **标准化协议**: 基于 FunASR Runtime 2.0 协议，兼容官方 WebSocket 客户端。
 
 ## 目录结构
 
-在构建前，请确保目录结构如下：
+构建环境需保持以下目录结构：
 
 ```text
 .
-├── Dockerfile          # 构建描述文件
-├── README.md           # 本文档
-├── download.py         # 模型下载脚本 (Python)
-├── entrypoint.sh       # 容器启动入口脚本
-└── model/              # [构建时生成] 存放下载的模型文件
-└── demo/              # [测试] 官方测试运行情况示例 
+├── Dockerfile          # 多阶段构建描述文件
+├── README.md           # 项目说明文档
+├── download.py         # 模型资源下载脚本
+├── entrypoint.sh       # 服务启动引导脚本
+├── model/              # [构建产物] 存放下载的模型文件
+└── demo/               # 客户端调用示例代码
 
 ```
 
----
+## 构建指南
 
-## 构建步骤 (Build Steps)
+### 1. 环境准备
 
-### 1. 准备构建环境
-
-确保宿主机安装了 Python3 和 `modelscope` 库：
+宿主机需安装 Python 3 环境及 `modelscope` 依赖库，用于获取模型资源。
 
 ```bash
 pip install modelscope
+
 ```
 
-### 2. 下载最新模型
+### 2. 获取模型资源
 
-执行 Python 脚本，将模型下载到本地 `model/` 目录。这是为了利用 Docker 缓存层，避免每次构建都重新下载大文件。
-
-**执行下载：**
+执行预置脚本将模型权重下载至本地 `model/` 目录。此步骤旨在利用 Docker 构建缓存机制，避免重复下载。
 
 ```bash
 python3 download.py
+
 ```
 
-### 3. 执行构建与推送
+### 3. 构建与推送
 
-使用 `docker buildx` 构建多架构镜像并推送到腾讯云仓库：
+使用 `docker buildx` 进行多架构构建。根据需求选择构建特定分支或同时构建。
+
+**构建 Online 分支:**
 
 ```bash
-# 替换为你的实际镜像仓库地址
-export IMAGE_NAME="my/asr:cpu"
-
+# IMAGE_NAME: ccr.ccs.tencentyun.com/lumen/asr:online
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
-  -t $IMAGE_NAME \
-  --push \
-  .
+  -t <IMAGE_NAME>:online \
+  -f Dockerfile.online \
+  --push .
 
 ```
 
----
+**构建 Offline 分支:**
 
-## 部署运行
+```bash
+# IMAGE_NAME: ccr.ccs.tencentyun.com/lumen/asr:offline
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t <IMAGE_NAME>:offline \
+  -f Dockerfile.offline \
+  --push .
 
-构建完成后，在任何服务器上运行以下命令即可，无需挂载卷，无需配置：
+```
+
+*(注：如使用单一 Dockerfile，请在构建命令中通过 `--build-arg` 或修改 Dockerfile 中的 FROM 指令来切换基础镜像)*
+
+## 部署说明
+
+容器启动时无需额外配置参数，端口映射请根据分支类型进行区分。
+
+### 启动 Online 服务
 
 ```bash
 docker run -d \
-  --name funasr-cpu \
+  --name funasr-online \
   -p 10095:10095 \
   --restart always \
-  ccr.ccs.tencentyun.com/lumen/asr:cpu
+  ccr.ccs.tencentyun.com/lumen/asr:online
+
 ```
 
----
+### 启动 Offline 服务
 
-## 客户端调用 (Usage)
+```bash
+docker run -d \
+  --name funasr-offline \
+  -p 10096:10096 \
+  --restart always \
+  ccr.ccs.tencentyun.com/lumen/asr:offline
 
-由于底层升级到了 Runtime 2.0 协议，请使用支持新协议的客户端。
+```
 
-### Python 客户端示例
+## 客户端接入
 
-安装依赖：
+服务基于 Runtime 2.0 协议。
+
+### Python 客户端
+
+安装官方客户端库：
 
 ```bash
 pip install funasr-wss-client
 
 ```
 
-测试代码： 参考 `demo\html\index.html`
+### Web/JS 客户端
+
+请参考本项目提供的示例代码：`demo/html/index.html`。
+
+## 版本规格说明
+
+| 组件 | Online 分支 | Offline 分支 |
+| --- | --- | --- |
+| **Runtime SDK** | 0.1.12 (Online) | 0.4.7 (Offline) |
+| **ASR Model** | paraformer-large-online-onnx | paraformer-large-onnx |
+| **VAD Model** | fsmn-vad-online-onnx | fsmn-vad-onnx |
+| **Punc Model** | ct-transformer-punc-onnx | ct-transformer-punc-onnx |
+| **默认端口** | 10095 | 10095 |
 
 ---
 
-## 版本记录
-
-* **Base Image**: `funasr-runtime-sdk-cpu-0.4.7`
-* **ASR Model**: `paraformer-large-online-onnx` (2Pass)
-* **VAD Model**: `fsmn-vad-online-onnx`
-* **Punc Model**: `ct-transformer-punc-onnx`
-* **Maintainer**: `J.K.`
+**Maintainer**: J.K.
